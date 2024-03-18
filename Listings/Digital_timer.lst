@@ -1,0 +1,156 @@
+A51 MACRO ASSEMBLER  DIGITAL_TIMER                                                        03/18/2024 16:34:04 PAGE     1
+
+
+MACRO ASSEMBLER A51 V8.02c
+OBJECT MODULE PLACED IN .\Objects\Digital_timer.obj
+ASSEMBLER INVOKED BY: C:\Keil_v5\C51\BIN\A51.EXE Digital_timer.a51 SET(SMALL) DEBUG PRINT(.\Listings\Digital_timer.lst) 
+                      OBJECT(.\Objects\Digital_timer.obj) EP
+
+LOC  OBJ            LINE     SOURCE
+
+0000                   1     ORG 0000H
+0000 020030            2     LJMP MAIN
+0003                   3     ORG 0003H ;ISR for INT0
+0003 1B                4      DEC R3 ;decrement the count for minute (tenth_digit)
+0004 EB                5     MOV A,R3 ;display minute(tenth_digit)
+0005 28                6     ADD A,R0
+0006 F9                7     MOV R1,A
+0007 8790              8     MOV P1,@R1
+0009 32                9     RETI
+0013                  10     ORG 0013H ;ISR for INT1
+0013 1C               11     DEC R4 ;decrement the count for hour
+0014 EC               12     MOV A,R4 ;display hour
+0015 28               13     ADD A,R0
+0016 F9               14     MOV R1,A
+0017 87A0             15     MOV P2,@R1
+0019 32               16     RETI
+0030                  17     ORG 0030H
+0030                  18     MAIN: ;main program
+0030 7830             19     MOV R0,#30H ;starting address of lookup table
+                      20      ;look up table for 7 segment display
+0032 7600             21     MOV @R0,#00H ;turn OFF display
+0034 08               22     INC R0
+0035 763F             23     MOV @R0,#3FH ;digit_0
+0037 08               24     INC R0
+0038 7606             25     MOV @R0,#06H ;digit_1
+003A 08               26     INC R0
+003B 765B             27     MOV @R0,#5BH ;digit_2 
+003D 08               28     INC R0
+003E 764F             29     MOV @R0,#4FH ;digit_3
+0040 08               30     INC R0
+0041 7666             31     MOV @R0,#66H ;digit_4
+0043 08               32     INC R0
+0044 766D             33     MOV @R0,#6DH ;digit_5
+0046 08               34     INC R0
+0047 767D             35     MOV @R0,#7DH ;digit_6
+0049 08               36     INC R0
+004A 7607             37     MOV @R0,#07H ;digit_7
+004C 08               38     INC R0
+004D 767F             39     MOV @R0,#7FH ;digit_8
+004F 08               40     INC R0
+0050 766F             41     MOV @R0,#6FH ;digit_9
+0052 08               42     INC R0
+0053 7677             43     MOV @R0,#77H ;digit_A
+0055 08               44     INC R0
+0056 767C             45     MOV @R0,#7CH ;digit_B
+0058 08               46     INC R0
+0059 7639             47     MOV @R0,#39H ;digit_C
+005B 08               48     INC R0
+005C 765E             49     MOV @R0,#5EH ;digit_D
+005E 08               50     INC R0
+005F 7679             51     MOV @R0,#79H ;digit_E
+0061 08               52     INC R0
+0062 7671             53     MOV @R0,#71H ;digit_F
+0064 7830             54     MOV R0,# 30H ;starting adrees of look-up table
+0066 758901           55     MOV TMOD,#01H ;timer-0 in mode-1
+0069 C2B1             56     CLR P3.1 ;Alarm pin1(output)
+006B C2B4             57     CLR P3.4 
+A51 MACRO ASSEMBLER  DIGITAL_TIMER                                                        03/18/2024 16:34:04 PAGE     2
+
+006D 75A885           58     MOV IE,#10000101B ;enable INT0 & INT1
+0070 D288             59     SETB TCON.0 ;INT0 in edge triggered
+0072 D28A             60     SETB TCON.2 ;INT1 in edge triggered
+0074 C3               61     CLR C
+                      62     ;initialization of ports and registers
+0075 75806F           63     MOV P0,#6FH 
+0078 75906F           64     MOV P1,#6FH
+007B 75A06F           65     MOV P2,#6FH
+007E 7A0A             66     MOV R2,#0AH
+0080 7B06             67     MOV R3,#06H
+0082 7C10             68     MOV R4,#10H
+0084 EC               69     HOUR:MOV A,R4
+0085 28               70     ADD A,R0
+0086 F9               71     MOV R1,A
+0087 87A0             72     MOV P2,@R1 ;display hour
+0089 7B06             73     MOV R3,#06H
+008B EB               74     MINUTE_1:MOV A,R3
+008C 28               75     ADD A,R0
+008D F9               76     MOV R1,A
+008E 8790             77     MOV P1,@R1 ;display minute(tenth digit)
+0090 7A0A             78     MOV R2,#0AH
+0092 EA               79     MINUTE_0:MOV A,R2
+0093 28               80     ADD A,R0
+0094 F9               81     MOV R1,A
+0095 8780             82     MOV P0,@R1 ;display minute(unit)
+0097 7E78             83     MOV R6,#78H ;delay generation of 1 minute
+0099 7F07             84     TMR2:MOV R7,#07H
+009B                  85     TMR1:
+009B 758A00           86     MOV TL0,#00H 
+009E 758C00           87     MOV TH0,#00H
+00A1 D28C             88     SETB TR0
+00A3 308DFD           89     BACK:JNB TF0,BACK
+00A6 C28C             90     CLR TR0
+00A8 C28D             91     CLR TF0
+00AA DFEF             92     DJNZ R7,TMR1
+00AC B2B0             93     CPL P3.0
+00AE DEE9             94     DJNZ R6,TMR2
+00B0 DAE0             95     DJNZ R2,MINUTE_0 ;jump to display new digits
+00B2 DBD7             96     DJNZ R3,MINUTE_1
+00B4 DCCE             97     DJNZ R4,HOUR
+00B6 D2B4             98     SETB P3.4 ;turn on alarm
+00B8                  99     ALARM: 
+00B8 B2B1            100     CPL P3.1 ;blink alarm LED with 500ms delay
+00BA 7D03            101     MOV R5,#03H
+00BC 7EFF            102     REP3:MOV R6,#0FFH
+00BE 7FFF            103     REP2:MOV R7,#0FFH
+00C0 DFFE            104     REP1:DJNZ R7,REP1
+00C2 DEFA            105     DJNZ R6,REP2
+00C4 DDF6            106     DJNZ R5,REP3
+00C6 80F0            107     SJMP ALARM
+                     108     END
+A51 MACRO ASSEMBLER  DIGITAL_TIMER                                                        03/18/2024 16:34:04 PAGE     3
+
+SYMBOL TABLE LISTING
+------ ----- -------
+
+
+N A M E             T Y P E  V A L U E   ATTRIBUTES
+
+ALARM. . . . . . .  C ADDR   00B8H   A   
+BACK . . . . . . .  C ADDR   00A3H   A   
+HOUR . . . . . . .  C ADDR   0084H   A   
+IE . . . . . . . .  D ADDR   00A8H   A   
+MAIN . . . . . . .  C ADDR   0030H   A   
+MINUTE_0 . . . . .  C ADDR   0092H   A   
+MINUTE_1 . . . . .  C ADDR   008BH   A   
+P0 . . . . . . . .  D ADDR   0080H   A   
+P1 . . . . . . . .  D ADDR   0090H   A   
+P2 . . . . . . . .  D ADDR   00A0H   A   
+P3 . . . . . . . .  D ADDR   00B0H   A   
+REP1 . . . . . . .  C ADDR   00C0H   A   
+REP2 . . . . . . .  C ADDR   00BEH   A   
+REP3 . . . . . . .  C ADDR   00BCH   A   
+TCON . . . . . . .  D ADDR   0088H   A   
+TF0. . . . . . . .  B ADDR   0088H.5 A   
+TH0. . . . . . . .  D ADDR   008CH   A   
+TL0. . . . . . . .  D ADDR   008AH   A   
+TMOD . . . . . . .  D ADDR   0089H   A   
+TMR1 . . . . . . .  C ADDR   009BH   A   
+TMR2 . . . . . . .  C ADDR   0099H   A   
+TR0. . . . . . . .  B ADDR   0088H.4 A   
+
+
+REGISTER BANK(S) USED: 0 
+
+
+ASSEMBLY COMPLETE.  0 WARNING(S), 0 ERROR(S)

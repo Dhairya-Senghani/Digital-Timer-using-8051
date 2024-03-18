@@ -1,0 +1,4 @@
+".\Objects\STARTUP.obj",
+".\Objects\Digital_timer.obj" 
+TO ".\Objects\Digital_Timer" 
+PRINT(".\Listings\Digital_Timer.m51")
